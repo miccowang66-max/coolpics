@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cool.Pic — AI 畫布生成器</title>
+  <meta name="description" content="輸入文字提示詞，透過 Hugging Face AI 在互動畫布上生成精彩圖像。支援拖曳、縮放、圖層管理與 PNG 匯出。">
+  <meta name="theme-color" content="#07070f">
+  <meta property="og:title" content="Cool.Pic — AI 畫布生成器">
+  <meta property="og:description" content="AI 驅動的互動式圖像生成畫布">
+  <meta property="og:url" content="https://miccowang66max.github.io/cool.pic/">
+
+  <!-- Favicon (SVG emoji) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Fabric.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div id="progress-bar" style="width:0%;opacity:0"></div>
+
+<!-- Toast Container -->
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- ╔══════════════════════════════════════════════════╗ -->
+<!-- ║  App Shell                                       ║ -->
+<!-- ╚══════════════════════════════════════════════════╝ -->
+<div id="app">
+
+  <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+  <aside id="sidebar" role="complementary" aria-label="控制面板">
+
+    <!-- Logo -->
+    <div id="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">🎨</div>
+        <div>
+          <div class="logo-text">Cool.Pic</div>
+          <div class="logo-sub">AI 畫布生成器</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div id="sidebar-body">
+
+      <!-- ── 提示詞輸入 ────────────────────────────── -->
+      <div class="glass-card">
+        <div class="section-title"><span>✍️</span> 提示詞</div>
+        <label class="field-label" for="prompt-input">描述你想生成的圖像</label>
+        <textarea
+          id="prompt-input"
+          placeholder="例如：夢幻星空下的古老城堡，水彩風格，高細節..."
+          rows="4"
+          aria-label="圖像提示詞"></textarea>
+
+        <div id="prompt-chips" class="chips-row" role="list" aria-label="提示詞建議"></div>
+
+        <div style="margin-top:var(--sp-sm)">
+          <label class="field-label" for="neg-prompt-input">負面提示詞（可選）</label>
+          <textarea
+            id="neg-prompt-input"
+            placeholder="模糊、低品質、變形..."
+            rows="2"
+            aria-label="負面提示詞"></textarea>
+        </div>
+      </div>
+
+      <!-- ── 生成設定 ──────────────────────────────── -->
+      <div class="glass-card">
+        <div class="section-title"><span>⚙️</span> 生成設定</div>
+
+        <div class="flex-col">
+          <div>
+            <label class="field-label" for="model-select">AI 模型</label>
+            <select id="model-select" aria-label="選擇 AI 模型"></select>
+          </div>
+
+          <div>
+            <label class="field-label">圖像寬度：<span id="width-val">512px</span></label>
+            <div class="slider-row">
+              <input type="range" id="width-slider"
+                min="256" max="1024" step="64" value="512"
+                aria-label="圖像寬度">
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label">圖像高度：<span id="height-val">512px</span></label>
+            <div class="slider-row">
+              <input type="range" id="height-slider"
+                min="256" max="1024" step="64" value="512"
+                aria-label="圖像高度">
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label">推理步數：<span id="steps-val">20</span></label>
+            <div class="slider-row">
+              <input type="range" id="steps-slider"
+                min="1" max="50" step="1" value="20"
+                aria-label="推理步數">
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label">引導強度：<span id="guidance-val">7.5</span></label>
+            <div class="slider-row">
+              <input type="range" id="guidance-slider"
+                min="1" max="20" step="0.5" value="7.5"
+                aria-label="引導強度">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 生成按鈕 ──────────────────────────────── -->
+      <button id="generate-btn" class="btn btn-primary" aria-label="生成圖像">
+        ✨ 生成圖像
+      </button>
+      <p style="font-size:0.72rem;color:var(--text-muted);text-align:center;margin-top:-8px">
+        Ctrl + Enter 快速生成
+      </p>
+
+      <!-- ── 畫布設定 ──────────────────────────────── -->
+      <div class="glass-card">
+        <div class="section-title"><span>🖼</span> 畫布設定</div>
+        <div class="canvas-bg-row">
+          <label class="field-label" for="bg-color-input" style="margin:0">背景顏色</label>
+          <input type="color" id="bg-color-input" value="#111122" aria-label="畫布背景顏色">
+        </div>
+      </div>
+
+      <!-- ── API Token 設定 ────────────────────────── -->
+      <div class="glass-card" id="token-section">
+        <div class="section-title">
+          <span>🔑</span> HF Token
+          <span id="token-status" style="margin-left:auto;font-size:0.78rem;text-transform:none;font-weight:500;color:var(--amber)">⚠️ 未設定</span>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-sm)">
+          Token 僅儲存於本機瀏覽器，不會上傳至伺服器。<br>
+          <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener"
+             style="color:var(--text-accent)">取得 Token →</a>
+        </p>
+        <div class="flex-row" style="gap:var(--sp-xs)">
+          <input type="password" id="token-input"
+            placeholder="hf_xxxxxxxxxxxxxxxx..."
+            style="flex:1"
+            aria-label="Hugging Face API Token">
+          <button id="token-save-btn" class="btn btn-ghost btn-sm">儲存</button>
+        </div>
+      </div>
+
+      <!-- ── 歷史紀錄 ──────────────────────────────── -->
+      <div class="glass-card">
+        <div class="section-title"><span>🕘</span> 最近生成</div>
+        <div id="history-grid" class="history-grid">
+          <p style="color:var(--text-muted);font-size:0.75rem;grid-column:1/-1;text-align:center;padding:8px">尚無紀錄</p>
+        </div>
+      </div>
+
+      <!-- ── 圖層管理 ──────────────────────────────── -->
+      <div class="glass-card" style="padding-bottom:var(--sp-sm)">
+        <div class="section-title">
+          <span>📚</span> 圖層
+          <span id="object-count" style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);text-transform:none;font-weight:400">0 個物件</span>
+        </div>
+        <div id="layer-list">
+          <p style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:8px">畫布空白</p>
+        </div>
+      </div>
+
+    </div><!-- /sidebar-body -->
+  </aside>
+
+  <!-- ═══════════════════ MAIN ══════════════════════ -->
+  <main id="main" role="main">
+
+    <!-- ── 工具列 ──────────────────────────────────── -->
+    <div id="toolbar" role="toolbar" aria-label="畫布工具列">
+
+      <!-- 工具選擇 -->
+      <div class="toolbar-group">
+        <button class="tool-btn active" data-tool="select" data-tip="選取 (V)" id="tool-select" aria-label="選取工具">⬚</button>
+        <button class="tool-btn" data-tool="pan" data-tip="平移 (H)" id="tool-pan" aria-label="平移工具">✋</button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <!-- 物件操作 -->
+      <div class="toolbar-group">
+        <button class="tool-btn" id="tb-duplicate" data-tip="複製 (Ctrl+D)" aria-label="複製">⧉</button>
+        <button class="tool-btn" id="tb-delete"    data-tip="刪除 (Delete)"  aria-label="刪除">🗑</button>
+        <button class="tool-btn" id="tb-flip-h"    data-tip="水平翻轉"       aria-label="水平翻轉">↔</button>
+        <button class="tool-btn" id="tb-flip-v"    data-tip="垂直翻轉"       aria-label="垂直翻轉">↕</button>
+        <button class="tool-btn" id="tb-rot-l"     data-tip="向左旋轉 90°"   aria-label="向左旋轉">↺</button>
+        <button class="tool-btn" id="tb-rot-r"     data-tip="向右旋轉 90°"   aria-label="向右旋轉">↻</button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <!-- 圖層操作 -->
+      <div class="toolbar-group">
+        <button class="tool-btn" id="tb-front" data-tip="移至最前" aria-label="移至最前">⬆</button>
+        <button class="tool-btn" id="tb-back"  data-tip="移至最後" aria-label="移至最後">⬇</button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <!-- 縮放 -->
+      <div class="toolbar-group">
+        <button class="tool-btn" id="tb-zoom-out"   data-tip="縮小" aria-label="縮小">－</button>
+        <span id="zoom-level" style="font-size:0.78rem;color:var(--text-muted);min-width:44px;text-align:center">100%</span>
+        <button class="tool-btn" id="tb-zoom-in"    data-tip="放大" aria-label="放大">＋</button>
+        <button class="tool-btn" id="tb-zoom-reset" data-tip="重設縮放 (100%)" aria-label="重設縮放" style="font-size:0.7rem">1:1</button>
+      </div>
+
+      <div class="toolbar-spacer"></div>
+
+      <!-- 清除 & 匯出 -->
+      <div class="toolbar-group">
+        <button class="tool-btn btn-danger" id="tb-clear"      data-tip="清除畫布"  aria-label="清除畫布" style="font-size:0.8rem;width:auto;padding:0 10px">清除</button>
+        <button class="tool-btn"            id="tb-export-png" data-tip="匯出 PNG" aria-label="匯出 PNG" style="font-size:0.8rem;width:auto;padding:0 10px">PNG ↓</button>
+        <button class="tool-btn"            id="tb-export-jpg" data-tip="匯出 JPG" aria-label="匯出 JPG" style="font-size:0.8rem;width:auto;padding:0 10px">JPG ↓</button>
+      </div>
+
+      <div class="toolbar-sep"></div>
+
+      <div id="canvas-info">
+        <div class="status-dot"></div>
+        <span>Cool.Pic</span>
+      </div>
+    </div>
+
+    <!-- ── 畫布區域 ─────────────────────────────────── -->
+    <div id="canvas-stage">
+
+      <!-- 空白提示 -->
+      <div id="canvas-empty" role="status" aria-live="polite">
+        <div class="empty-icon">🎨</div>
+        <div class="empty-title">畫布空白</div>
+        <div class="empty-sub">在左側輸入提示詞，<br>點擊「生成圖像」開始創作</div>
+      </div>
+
+      <!-- Fabric.js Canvas -->
+      <div id="canvas-wrapper">
+        <canvas id="main-canvas"></canvas>
+      </div>
+
+    </div><!-- /canvas-stage -->
+  </main><!-- /main -->
+
+</div><!-- /app -->
+
+<!-- ── Scripts ─────────────────────────────────────────── -->
+<script src="js/api.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
