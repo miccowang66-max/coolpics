@@ -353,6 +353,12 @@ with st.sidebar:
     # ── 提示詞 ──────────────────────────────────────────
     if "_prompt_val" not in st.session_state:
         st.session_state["_prompt_val"] = ""
+    if "_ta_key" not in st.session_state:
+        st.session_state["_ta_key"] = 0
+
+    def _on_prompt_change():
+        current_key = f"_prompt_input_{st.session_state['_ta_key']}"
+        st.session_state["_prompt_val"] = st.session_state.get(current_key, "")
 
     st.markdown("**✍️ 提示詞**")
     prompt = st.text_area(
@@ -360,10 +366,10 @@ with st.sidebar:
         value=st.session_state["_prompt_val"],
         placeholder="例如：夢幻星空下的古老城堡，水彩風格，高細節，4K...",
         height=110,
+        key=f"_prompt_input_{st.session_state['_ta_key']}",
+        on_change=_on_prompt_change,
         label_visibility="collapsed",
     )
-    if prompt != st.session_state["_prompt_val"]:
-        st.session_state["_prompt_val"] = prompt
 
     # 快速建議按鈕
     st.markdown("<div style='font-size:0.75rem;color:#60607a;margin-bottom:4px'>💡 快速建議</div>",
@@ -372,6 +378,7 @@ with st.sidebar:
     for i, sug in enumerate(PROMPT_SUGGESTIONS):
         if cols_chips[i % 2].button(sug, key=f"chip_{i}", use_container_width=True):
             st.session_state["_prompt_val"] = sug
+            st.session_state["_ta_key"] += 1
             st.rerun()
 
     st.markdown("**🚫 負面提示詞（可選）**")
@@ -405,12 +412,16 @@ with st.sidebar:
 
     col_seed, col_rand = st.columns([3, 1])
     with col_seed:
-        seed = st.number_input("隨機種子", min_value=0, max_value=2147483647,
-                               value=st.session_state.get("seed_val", 42), step=1)
+        seed = st.number_input(
+            "隨機種子", min_value=0, max_value=2147483647,
+            value=st.session_state.get("seed_val", 42), step=1,
+            key=f"_seed_input_{st.session_state.get('_seed_key', 0)}",
+        )
     with col_rand:
         if st.button("🎲", help="隨機種子"):
             import random
             st.session_state["seed_val"] = random.randint(0, 2147483647)
+            st.session_state["_seed_key"] = st.session_state.get("_seed_key", 0) + 1
             st.rerun()
 
     st.divider()
