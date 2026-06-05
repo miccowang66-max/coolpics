@@ -19,8 +19,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        "Get Help":      "https://github.com/miccowang66max/cool.pic",
-        "Report a bug":  "https://github.com/miccowang66max/cool.pic/issues",
+        "Get Help":      "https://github.com/miccowang66-max/coolpic",
+        "Report a bug":  "https://github.com/miccowang66-max/coolpic/issues",
         "About":         "## Cool.Pic\nAI 驅動的互動式圖像生成器",
     },
 )
@@ -456,9 +456,9 @@ with st.sidebar:
                 border:1px solid rgba(255,255,255,0.07);border-radius:10px;
                 font-size:0.75rem;color:#60607a;line-height:1.7">
         🚀 Powered by <b style="color:#b08aff">Hugging Face</b><br>
-        🖼 <a href="https://github.com/miccowang66max/cool.pic"
+        🖼 <a href="https://github.com/miccowang66-max/coolpic"
               style="color:#b08aff;text-decoration:none"
-              target="_blank">GitHub: cool.pic</a><br>
+              target="_blank">GitHub: coolpic</a><br>
         ⚡ 免費開放使用，無需帳號
     </div>
     """, unsafe_allow_html=True)
@@ -539,7 +539,7 @@ if generate_clicked:
                         file_name=f"cool_pic_{item['timestamp']}_seed{item['seed']}.png",
                         mime="image/png",
                         use_container_width=True,
-                        key=f"dl_new_{i}_{time.time()}",
+                        key=f"dl_new_{i}",
                     )
 
 

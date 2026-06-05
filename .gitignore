@@ -1,13 +1,12 @@
 # =============================================================
 #  .gitignore — AI Canvas Generator
-#  GitHub Repo: miccowang66max/cool.pic
+#  GitHub Repo: miccowang66-max/coolpic
 # =============================================================
 
 # ── 機密金鑰（絕對不上傳）──────────────────────────────────
 .env
 .env.local
 .env.*.local
-secrets.toml
 *.key
 *.pem
 
@@ -31,9 +30,6 @@ venv/
 ENV/
 env/
 .python-version
-
-# ── Streamlit ────────────────────────────────────────────────
-.streamlit/secrets.toml
 
 # ── Node / JS ────────────────────────────────────────────────
 node_modules/

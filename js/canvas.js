@@ -201,13 +201,15 @@ const CanvasEngine = (() => {
     canvas.isDrawingMode = false;
     canvas.selection     = true;
     canvas.defaultCursor = 'default';
+    canvas.off('mouse:down');
+    canvas.off('mouse:move');
+    canvas.off('mouse:up');
   }
 
   function setPanMode() {
     canvas.isDrawingMode = false;
     canvas.selection     = false;
     canvas.defaultCursor = 'grab';
-    // 平移拖曳
     let isDragging = false, lastPosX, lastPosY;
     canvas.off('mouse:down');
     canvas.off('mouse:move');
