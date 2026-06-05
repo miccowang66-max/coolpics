@@ -354,19 +354,16 @@ with st.sidebar:
     if "_prompt_val" not in st.session_state:
         st.session_state["_prompt_val"] = ""
 
-    def _sync_prompt():
-        st.session_state["_prompt_val"] = st.session_state["prompt_area"]
-
     st.markdown("**✍️ 提示詞**")
     prompt = st.text_area(
         "描述你想生成的圖像",
         value=st.session_state["_prompt_val"],
         placeholder="例如：夢幻星空下的古老城堡，水彩風格，高細節，4K...",
         height=110,
-        key="prompt_area",
-        on_change=_sync_prompt,
         label_visibility="collapsed",
     )
+    if prompt != st.session_state["_prompt_val"]:
+        st.session_state["_prompt_val"] = prompt
 
     # 快速建議按鈕
     st.markdown("<div style='font-size:0.75rem;color:#60607a;margin-bottom:4px'>💡 快速建議</div>",
