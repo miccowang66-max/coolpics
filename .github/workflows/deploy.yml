@@ -28,20 +28,12 @@ jobs:
 
       - name: Prepare static files
         run: |
-          mkdir -p _site
-          rsync -av \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.env' \
-            --exclude='.env.example' \
-            --exclude='.env.local' \
-            --exclude='.gitignore' \
-            --exclude='.streamlit' \
-            --exclude='app.py' \
-            --exclude='requirements.txt' \
-            --exclude='README.md' \
-            --exclude='LICENSE' \
-            ./ _site/
+          mkdir -p _site/css _site/js
+          cp index.html _site/
+          cp css/style.css _site/css/
+          cp js/api.js _site/js/
+          cp js/app.js _site/js/
+          cp js/canvas.js _site/js/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

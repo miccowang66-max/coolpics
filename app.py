@@ -351,9 +351,13 @@ with st.sidebar:
     st.divider()
 
     # ── 提示詞 ──────────────────────────────────────────
+    if "_prompt_val" not in st.session_state:
+        st.session_state["_prompt_val"] = ""
+
     st.markdown("**✍️ 提示詞**")
     prompt = st.text_area(
         "描述你想生成的圖像",
+        value=st.session_state["_prompt_val"],
         placeholder="例如：夢幻星空下的古老城堡，水彩風格，高細節，4K...",
         height=110,
         key="prompt_area",
@@ -366,7 +370,7 @@ with st.sidebar:
     cols_chips = st.columns(2)
     for i, sug in enumerate(PROMPT_SUGGESTIONS):
         if cols_chips[i % 2].button(sug, key=f"chip_{i}", use_container_width=True):
-            st.session_state["prompt_area"] = sug
+            st.session_state["_prompt_val"] = sug
             st.rerun()
 
     st.markdown("**🚫 負面提示詞（可選）**")
