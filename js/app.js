@@ -84,8 +84,8 @@ function _cacheDom() {
 
 /* ── 畫布初始化 ──────────────────────────────────────────── */
 function _initCanvas() {
-  const w = parseInt(DOM.widthSlider?.value  || 1280);
-  const h = parseInt(DOM.heightSlider?.value || 720);
+  const w = Math.max(parseInt(DOM.widthSlider?.value)  || 1280, 256);
+  const h = Math.max(parseInt(DOM.heightSlider?.value) || 720,  256);
 
   CanvasEngine.init('main-canvas', w, h, _onLayerChange);
 
