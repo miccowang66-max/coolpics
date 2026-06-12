@@ -51,7 +51,10 @@ MODELS = {
     "Dreamshaper 8":                   "Lykon/dreamshaper-8",
 }
 
-HF_API_URL = "https://api-inference.huggingface.co/models"
+HF_API_URLS = [
+    "https://api-inference.huggingface.co/models",
+    "https://router.huggingface.co/hf-inference/models",
+]
 
 # ── Session ──────────────────────────────────────────────────
 for k, v in {"gallery": [], "total": 0, "_ta_key": 0, "_prompt_val": "", "_seed_key": 0, "_seed_val": 42}.items():
@@ -78,28 +81,35 @@ def call_hf_api(prompt, model_id, width, height, neg_prompt, steps, guidance, se
             **({"negative_prompt": neg_prompt} if neg_prompt else {}),
         },
     }
-    url = f"{HF_API_URL}/{model_id}"
 
-    for attempt in range(1, 4):
-        resp = requests.post(url, headers=headers, json=payload, timeout=120)
-        if resp.ok:
-            return resp.content
-        if resp.status_code == 503:
-            wait = min(float(resp.json().get("estimated_time", 25)), 35)
-            st.toast(f"模型預熱中，等待 {wait:.0f}s…", icon="⏳")
-            time.sleep(wait)
-            continue
-        err = f"API 錯誤 {resp.status_code}"
+    last_err = None
+    for base_url in HF_API_URLS:
+        url = f"{base_url}/{model_id}"
         try:
-            err = resp.json().get("error", err)
-        except Exception:
-            pass
-        if resp.status_code == 401:
-            err = "API Token 無效"
-        elif resp.status_code == 429:
-            err = "請求過於頻繁，請稍後再試"
-        raise RuntimeError(err)
-    raise TimeoutError("模型載入逾時")
+            for attempt in range(1, 4):
+                resp = requests.post(url, headers=headers, json=payload, timeout=120)
+                if resp.ok:
+                    return resp.content
+                if resp.status_code == 503:
+                    wait = min(float(resp.json().get("estimated_time", 25)), 35)
+                    st.toast(f"模型預熱中，等待 {wait:.0f}s…", icon="⏳")
+                    time.sleep(wait)
+                    continue
+                err = f"API 錯誤 {resp.status_code}"
+                try:
+                    err = resp.json().get("error", err)
+                except Exception:
+                    pass
+                if resp.status_code == 401:
+                    err = "API Token 無效"
+                elif resp.status_code == 429:
+                    err = "請求過於頻繁，請稍後再試"
+                raise RuntimeError(err)
+            raise TimeoutError("模型載入逾時")
+        except (requests.ConnectionError, requests.Timeout) as e:
+            last_err = e
+            continue
+    raise RuntimeError(f"無法連線至 Hugging Face API：{last_err}")
 
 
 # ═══════════════ SIDEBAR ═══════════════
