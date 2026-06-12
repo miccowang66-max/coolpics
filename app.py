@@ -54,7 +54,7 @@ MODELS = {
 HF_API_URL = "https://api-inference.huggingface.co/models"
 
 # ── Session ──────────────────────────────────────────────────
-for k, v in {"gallery": [], "total": 0}.items():
+for k, v in {"gallery": [], "total": 0, "_ta_key": 0, "_prompt_val": "", "_seed_key": 0, "_seed_val": 42}.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
@@ -118,7 +118,8 @@ with st.sidebar:
     st.markdown("**✍️ 提示詞**")
     prompt = st.text_area(
         "描述你想生成的圖像",
-        key="prompt_input",
+        value=st.session_state["_prompt_val"],
+        key=f"prompt_input_{st.session_state['_ta_key']}",
         placeholder="例如：夢幻星空下的古老城堡，水彩風格，高細節，4K...",
         height=100,
         label_visibility="collapsed",
@@ -130,7 +131,8 @@ with st.sidebar:
     cols = st.columns(2)
     for i, sug in enumerate(SUGGESTIONS):
         if cols[i % 2].button(sug, key=f"sug_{i}", use_container_width=True):
-            st.session_state["prompt_input"] = sug
+            st.session_state["_prompt_val"] = sug
+            st.session_state["_ta_key"] += 1
             st.rerun()
 
     st.markdown("**🚫 負面提示詞（可選）**")
@@ -153,11 +155,14 @@ with st.sidebar:
 
     cseed, cbtn = st.columns([3, 1])
     with cseed:
-        seed = st.number_input("隨機種子", 0, 2147483647, key="seed_input", value=42)
+        seed = st.number_input("隨機種子", 0, 2147483647,
+                               value=st.session_state["_seed_val"],
+                               key=f"seed_input_{st.session_state['_seed_key']}")
     with cbtn:
         if st.button("🎲", help="隨機種子"):
             import random
-            st.session_state["seed_input"] = random.randint(0, 2147483647)
+            st.session_state["_seed_val"] = random.randint(0, 2147483647)
+            st.session_state["_seed_key"] += 1
             st.rerun()
 
     batch = st.select_slider("批次生成", options=[1, 2, 4], value=1)
