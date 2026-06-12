@@ -43,7 +43,7 @@ const DOM = {
 /* ── 初始化 ──────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   _cacheDom();
-  _initCanvas();
+  try { _initCanvas(); } catch (e) { console.error('Canvas init failed:', e); }
   _initModelSelect();
   _bindEvents();
   _loadHistory();
@@ -216,7 +216,11 @@ async function handleGenerate() {
     const result = await HF_API.generateImage(prompt, options);
 
     _setProgress(80);
-    await CanvasEngine.addImage(result.url, prompt);
+    try {
+      await CanvasEngine.addImage(result.url, prompt);
+    } catch (canvasErr) {
+      console.error('Canvas addImage failed:', canvasErr);
+    }
     _setProgress(100);
 
     // 更新 UI
