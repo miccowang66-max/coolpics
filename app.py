@@ -54,6 +54,7 @@ MODELS = {
 HF_API_URLS = [
     "https://api-inference.huggingface.co/models",
     "https://router.huggingface.co/hf-inference/models",
+    "https://api.huggingface.co/models",
 ]
 
 # ── Session ──────────────────────────────────────────────────
